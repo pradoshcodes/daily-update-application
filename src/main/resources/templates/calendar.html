@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Log Calendar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .user-info {
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logout-btn {
+            padding: 8px 16px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .logout-btn:hover {
+            background-color: #da190b;
+        }
+        .log-form {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .log-form h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .calendar-container {
+            margin-bottom: 25px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .calendar-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        .month-nav {
+            display: flex;
+            gap: 10px;
+        }
+        .month-nav button {
+            padding: 5px 15px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .month-nav button:hover {
+            background-color: #0b7dda;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        .calendar-day-header {
+            text-align: center;
+            font-weight: bold;
+            padding: 10px;
+            background-color: #f8f9fa;
+            color: #333;
+            border-radius: 4px;
+        }
+        .calendar-day {
+            aspect-ratio: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: white;
+            position: relative;
+        }
+        .calendar-day:hover {
+            background-color: #f5f5f5;
+            transform: scale(1.05);
+        }
+        .calendar-day.empty {
+            background-color: transparent;
+            border: none;
+            cursor: default;
+        }
+        .calendar-day.empty:hover {
+            background-color: transparent;
+            transform: none;
+        }
+        .calendar-day.today {
+            background-color: #e3f2fd;
+            border: 2px solid #2196F3;
+            font-weight: bold;
+        }
+        .calendar-day.selected {
+            background-color: #2196F3;
+            color: white;
+        }
+        .calendar-day.has-log {
+            background-color: #c8e6c9;
+        }
+        .calendar-day.has-log.done {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .day-number {
+            font-size: 16px;
+        }
+        .day-indicator {
+            font-size: 10px;
+            margin-top: 2px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .checkbox-group label {
+            font-size: 16px;
+            cursor: pointer;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .submit-btn:hover {
+            background-color: #45a049;
+        }
+        .selected-date-info {
+            background-color: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .logs-table {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .logs-table h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: bold;
+        }
+        .status-done {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .status-pending {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        .no-logs {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+		textarea#message {
+		    width: 100%;
+		    padding: 10px;
+		    border: 1px solid #ddd;
+		    border-radius: 4px;
+		    box-sizing: border-box;
+		    font-family: Arial, sans-serif;
+		    font-size: 14px;
+		    resize: vertical;
+		    min-height: 70px;
+		    background-color: #fcfcfc;
+		}
+
+		textarea#message:focus {
+		    outline: none;
+		    border-color: #2196F3;
+		    box-shadow: 0 0 3px rgba(33, 150, 243, 0.6);
+		}
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Daily Log Calendar</h1>
+        <div class="user-info">
+            <div>
+                <strong>Welcome, <span th:text="${user.name}">User</span>!</strong><br>
+                <small>Born: <span th:text="${#temporals.format(user.dob, 'MMMM dd, yyyy')}">Date</span></small>
+            </div>
+            <a th:href="@{/logout}" class="logout-btn">Logout</a>
+        </div>
+    </div>
+    
+    <div class="log-form">
+        <h2>Log Today's Activity</h2>
+        
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <h3 id="monthYear"></h3>
+                <div class="month-nav">
+                    <button onclick="changeMonth(-1)">← Prev</button>
+                    <button onclick="changeMonth(1)">Next →</button>
+                </div>
+            </div>
+            <div class="calendar" id="calendar"></div>
+        </div>
+        
+        <div class="selected-date-info" id="selectedDateInfo">
+            Selected: <span id="selectedDateText"></span>
+        </div>
+        
+        <!--<form th:action="@{/calendar}" method="post" id="logForm">
+            <input type="hidden" name="selectedDate" id="selectedDateInput">
+            
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="done" name="done" value="true">
+                <label for="done">Task completed</label>
+            </div>
+            
+            <div class="form-group">
+                <label for="timeInvested">Time invested (minutes):</label>
+                <input type="number" id="timeInvested" name="timeInvested" 
+                       min="0" value="0" required>
+            </div>
+            
+            <button type="submit" class="submit-btn">Save Log</button>
+        </form>-->
+		<form th:action="@{/calendar}" method="post" id="logForm">
+		    <input type="hidden" name="selectedDate" id="selectedDateInput">
+
+		    <div class="form-group checkbox-group">
+		        <input type="checkbox" id="done" name="done" value="true">
+		        <label for="done">Task completed</label>
+		    </div>
+
+		    <div class="form-group">
+		        <label for="timeInvested">Time invested (minutes):</label>
+		        <input type="number" id="timeInvested" name="timeInvested"
+		               min="0" value="0" required>
+		    </div>
+
+		    <!-- NEW: message field -->
+		    <div class="form-group">
+		        <label for="message">Task details / notes:</label>
+		        <textarea id="message" name="message" rows="3"
+		                  placeholder="What did you work on today?"></textarea>
+		    </div>
+
+		    <button type="submit" class="submit-btn">Save Log</button>
+		</form>
+
+    </div>
+    
+    <script th:inline="javascript">
+        const logs = /*[[${logs}]]*/ [];
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let selectedDate = new Date();
+        
+        // Create a map of dates with logs
+        const logMap = {};
+        logs.forEach(log => {
+            const date = log.date.join('-');
+            logMap[date] = log;
+        });
+        
+        function renderCalendar() {
+            const calendar = document.getElementById('calendar');
+            const monthYear = document.getElementById('monthYear');
+            
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDay = firstDay.getDay();
+            
+            const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            monthYear.textContent = `${months[currentMonth]} ${currentYear}`;
+            
+            calendar.innerHTML = '';
+            
+            // Day headers
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            days.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                header.textContent = day;
+                calendar.appendChild(header);
+            });
+            
+            // Empty cells before first day
+            for (let i = 0; i < startDay; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'calendar-day empty';
+                calendar.appendChild(empty);
+            }
+            
+            // Days of month
+            const today = new Date();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day';
+                
+                const currentDate = new Date(currentYear, currentMonth, day);
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                // Check if it's today
+                if (currentDate.toDateString() === today.toDateString()) {
+                    dayDiv.classList.add('today');
+                }
+                
+                // Check if selected
+                if (currentDate.toDateString() === selectedDate.toDateString()) {
+                    dayDiv.classList.add('selected');
+                }
+                
+                // Check if has log
+                const log = logMap[dateStr];
+                if (log) {
+                    dayDiv.classList.add('has-log');
+                    if (log.done) {
+                        dayDiv.classList.add('done');
+                    }
+                }
+                
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+                dayDiv.appendChild(dayNumber);
+                
+                if (log) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'day-indicator';
+                    indicator.textContent = `${log.timeInvested}m`;
+                    dayDiv.appendChild(indicator);
+                }
+                
+                dayDiv.onclick = () => selectDate(currentDate);
+                calendar.appendChild(dayDiv);
+            }
+            
+            updateSelectedDateInfo();
+        }
+        
+        function selectDate(date) {
+            selectedDate = date;
+            renderCalendar();
+            
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            document.getElementById('selectedDateInput').value = dateStr;
+            
+            // Load existing log data if available
+            const log = logMap[dateStr];
+            if (log) {
+                document.getElementById('done').checked = log.done;
+                document.getElementById('timeInvested').value = log.timeInvested;
+            } else {
+                document.getElementById('done').checked = false;
+                document.getElementById('timeInvested').value = 0;
+            }
+        }
+        
+        function updateSelectedDateInfo() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('selectedDateText').textContent = 
+                selectedDate.toLocaleDateString('en-US', options);
+        }
+        
+        function changeMonth(delta) {
+            currentMonth += delta;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar();
+        }
+        
+        // Initialize
+        renderCalendar();
+        selectDate(selectedDate);
+    </script>
+    
+    <div class="logs-table">
+        <h2>Past Logs</h2>
+        
+        <div th:if="${#lists.isEmpty(logs)}" class="no-logs">
+            No logs yet. Start logging your daily activities!
+        </div>
+        
+		<table th:if="${!#lists.isEmpty(logs)}">
+		    <thead>
+		        <tr>
+		            <th>Date</th>
+		            <th>Status</th>
+		            <th>Time Invested</th>
+		            <th>Message</th> <!-- NEW -->
+		        </tr>
+		    </thead>
+		    <tbody>
+		        <tr th:each="log : ${logs}">
+		            <td th:text="${#temporals.format(log.date, 'EEEE, MMM dd, yyyy')}">Date</td>
+		            <td>
+		                <span th:if="${log.done}" class="status-done">✓ Done</span>
+		                <span th:if="${!log.done}" class="status-pending">○ Pending</span>
+		            </td>
+		            <td>
+		                <span th:text="${log.timeInvested}">0</span> minutes
+		                <span th:if="${log.timeInvested >= 60}">
+		                    (<span th:text="${log.timeInvested / 60}">0</span>h 
+		                    <span th:text="${log.timeInvested % 60}">0</span>m)
+		                </span>
+		            </td>
+		            <!-- NEW: message cell -->
+		            <td>
+		                <span th:text="${log.message}">No message</span>
+		            </td>
+		        </tr>
+		    </tbody>
+		</table>
+    </div>
+</body>
+</html>
