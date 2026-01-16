@@ -319,7 +319,7 @@
     </div>
     
     <script th:inline="javascript">
-        const logs = /*[[${logs}]]*/ [];
+      
         let currentMonth = new Date().getMonth();
         let currentYear = new Date().getFullYear();
         let selectedDate = new Date();
@@ -449,6 +449,30 @@
         // Initialize
         renderCalendar();
         selectDate(selectedDate);
+		
+		const logs = /*[[${logs}]]*/ [];
+		const logDates = /*[[${logDates}]]*/ []; // list of LocalDate => becomes array of "yyyy-MM-dd" strings
+
+		const loggedDateSet = new Set(
+		    logDates.map(d => Array.isArray(d) ? d.join('-') : d)
+		);
+
+		// OLD: using logMap with limited logs
+		// const log = logMap[dateStr];
+		// if (log) { ... }
+
+		// NEW: highlight any date that is in loggedDateSet
+		const hasLog = loggedDateSet.has(dateStr);
+
+		if (hasLog) {
+		    dayDiv.classList.add('has-log');
+		    // If you also want "done" info and minutes from current page logs:
+		    const log = logMap[dateStr];
+		    if (log && log.done) {
+		        dayDiv.classList.add('done');
+		    }
+		}
+
     </script>
     
     <div class="logs-table">
@@ -488,6 +512,29 @@
 		        </tr>
 		    </tbody>
 		</table>
+		<div th:if="${totalPages > 1}" style="margin-top: 15px; text-align: center;">
+		    <a th:if="${currentPage > 0}"
+		       th:href="@{/calendar(page=${currentPage - 1})}">
+		        ← Previous 7 days
+		    </a>
+		    <span th:unless="${currentPage > 0}" style="color: #ccc;">
+		        ← Previous 7 days
+		    </span>
+
+		    <span style="margin: 0 10px;">
+		        Page <span th:text="${currentPage + 1}">1</span>
+		        of <span th:text="${totalPages}">1</span>
+		    </span>
+
+		    <a th:if="${currentPage + 1 < totalPages}"
+		       th:href="@{/calendar(page=${currentPage + 1})}">
+		        Next 7 days →
+		    </a>
+		    <span th:unless="${currentPage + 1 < totalPages}" style="color: #ccc;">
+		        Next 7 days →
+		    </span>
+		</div>
+
     </div>
 </body>
 </html>
